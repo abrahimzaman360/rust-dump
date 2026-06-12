@@ -1,12 +1,13 @@
 use std::{
-    collections::HashMap,
     env::args,
     fs::{File, read_dir},
     io::Read,
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::Arc,
     thread::{self, JoinHandle},
 };
+
+use dashmap::DashMap;
 
 // Mini Data Processor:
 // Goals:
@@ -19,7 +20,7 @@ use std::{
 //
 
 // Self Written
-fn process<'a>(file: PathBuf, locked_store: Arc<Mutex<HashMap<String, usize>>>) {
+fn process(file: PathBuf, store: Arc<DashMap<String, usize>>) {
     // AI Taught:
     // We need String in Hasmap<String, usize>, because content is local string, will drop at end and cause invalid word refs got in Hashmap.
     let mut content = String::new();
@@ -38,12 +39,10 @@ fn process<'a>(file: PathBuf, locked_store: Arc<Mutex<HashMap<String, usize>>>) 
         eprintln!("Content is empty");
     }
 
-    let mut unlocked_store = locked_store.lock().unwrap();
-
     for line in content.split("\n") {
         for word in line.split_whitespace() {
-            unlocked_store
-                .entry(word.into())
+            store
+                .entry(word.to_string())
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
         }
@@ -52,7 +51,7 @@ fn process<'a>(file: PathBuf, locked_store: Arc<Mutex<HashMap<String, usize>>>) 
 
 fn main() {
     // Task 1 (read file)
-    let store: Arc<Mutex<HashMap<String, usize>>> = Arc::new(Mutex::new(HashMap::new()));
+    let store: Arc<DashMap<String, usize>> = Arc::new(DashMap::new());
 
     // Self Learnt:
     let dir = args().nth(1).unwrap_or("./".to_string());
@@ -91,6 +90,5 @@ fn main() {
     }
 
     // AI Taught:
-    let unlocked = store.lock().unwrap();
-    println!("{:#?}", unlocked);
+    println!("{:#?}", store);
 }
