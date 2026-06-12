@@ -1,6 +1,0 @@
-each day introduces real ownership problems
-borrow checker becomes natural, not painful
-you end up building something job relevant
-each day introduces real ownership problems
-borrow checker becomes natural, not painful
-you end up building something job relevant
