@@ -1,54 +1,21 @@
 use std::{
     env::args,
-    fs::{File, read_dir},
-    io::Read,
-    path::PathBuf,
+    fs::read_dir,
     sync::Arc,
     thread::{self, JoinHandle},
 };
 
 use dashmap::DashMap;
+use training::process_files;
 
-// Mini Data Processor:
-// Goals:
-// Input -> Processing -> Storage<Opt> -> Output
-// What is our Input: <Files | Stdin aka Terminal Input etc>
-// How to process: Load files -> Split by lines -> Count words -> Store Counts in Hashmap -> Return Results.
-//
-// There is currently lock contention problem causing each thread to wait until lock is freed.
-// That will be resolved in next iteration IA;
-//
-
-// Self Written
-fn process(file: PathBuf, store: Arc<DashMap<String, usize>>) {
-    // AI Taught:
-    // We need String in Hasmap<String, usize>, because content is local string, will drop at end and cause invalid word refs got in Hashmap.
-    let mut content = String::new();
-    match File::open(file) {
-        Ok(mut f) => {
-            f.read_to_string(&mut content).unwrap();
-        }
-        Err(e) => {
-            eprintln!("{e}");
-            return;
-        }
-    };
-
-    // Process the content
-    if content.is_empty() {
-        eprintln!("Content is empty");
-    }
-
-    for line in content.split("\n") {
-        for word in line.split_whitespace() {
-            store
-                .entry(word.to_string())
-                .and_modify(|v| *v += 1)
-                .or_insert(1);
-        }
-    }
-}
-
+#[doc = "# Mini Data Processor:\n
+## Goals:
+1. Input -> Processing -> Storage<Opt> -> Output.\n
+2. What is our Input: <Files | Stdin aka Terminal Input etc>\n
+3. How to process: Load files -> Split by lines -> Count words -> Store Counts in Hashmap -> Return Results.\n
+4. There is currently lock contention problem causing each thread to wait until lock is freed.\n
+5. That will be resolved in next iteration IA;
+"]
 fn main() {
     // Task 1 (read file)
     let store: Arc<DashMap<String, usize>> = Arc::new(DashMap::new());
@@ -78,7 +45,7 @@ fn main() {
         };
 
         let handle = thread::spawn(move || {
-            process(file_path, cloned_store);
+            process_files(file_path, cloned_store);
         });
 
         handles.push(handle);
